@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JsPlugin>
+  <ApiVersion>1.0.0</ApiVersion>
+  <Name>单元格中英翻译</Name>
+  <Description>WPS表格：选中单元格自动中英互译，支持自定义智谱API Key</Description>
+  <Functions>
+    <Uri>/functions.json</Uri>
+    <Namespace>TranslateEt</Namespace>
+  </Functions>
+</JsPlugin>
