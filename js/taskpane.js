@@ -105,52 +105,5 @@ window.onload = function () {
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
     setInterval(tick, 600);
-    maybeRunUninstall();
 };
 
-// ============ 卸载插件（任务窗格内执行） ============
-// 背景：ribbon 环境无 WpsAddonMgr，且插件页面（https）内请求 localhost:58890 属混合内容被内置浏览器拦截。
-// 方案：优先用 WpsAddonMgr.disable（若 taskpane 环境有）；否则用 OAAssist 打开在线卸载页（外部浏览器对 localhost 有豁免，可正常卸载）。
-var ONLINE_PUBLISH = 'https://lizzstudio.github.io/wps-translate/publish.html';
-
-function maybeRunUninstall() {
-    var req = window.Application.PluginStorage.getItem("uninstall_request");
-    if (req !== "1") return;
-    window.Application.PluginStorage.setItem("uninstall_request", "0");
-    setTimeout(doUninstall, 300);
-}
-
-// 面板内的"卸载插件"按钮入口
-function uninstallFromPane() {
-    setTimeout(doUninstall, 100);
-}
-
-function doUninstall() {
-    if (!window.confirm('确定要卸载「单元格翻译」插件吗？\n卸载后重启 WPS 表格即生效。')) return;
-    // 方式一：WPS 原生管理接口
-    if (typeof WpsAddonMgr !== 'undefined' && WpsAddonMgr.disable) {
-        WpsAddonMgr.disable({
-            name: 'wps-translate', addonType: 'et', online: 'true',
-            url: 'https://lizzstudio.github.io/wps-translate/'
-        }, function (result) {
-            // 回读配置确认是否已移除
-            WpsAddonMgr.getAllConfig(function (cfg) {
-                var removed = cfg && cfg.response && String(cfg.response).indexOf('wps-translate') < 0;
-                if (removed) {
-                    alert('卸载成功！请重启 WPS 表格，插件即从功能区消失。');
-                } else {
-                    alert('卸载失败：' + ((result && result.msg) || '未知错误') + '（可重新打开 publish.html 手动卸载）');
-                }
-            });
-        });
-        return;
-    }
-    // 方式二：OAAssist 打开在线卸载页（外部浏览器可访问 localhost:58890）
-    if (typeof wps !== 'undefined' && wps.OAAssist && wps.OAAssist.ShellExecute) {
-        wps.OAAssist.ShellExecute(ONLINE_PUBLISH);
-        alert('已为您打开卸载页面：\n' + ONLINE_PUBLISH + '\n请在浏览器里点「卸载」，完成后重启 WPS 表格。');
-        return;
-    }
-    // 方式三：兜底
-    alert('请重新打开发布包里的 publish.html，点「卸载」完成卸载。');
-}
