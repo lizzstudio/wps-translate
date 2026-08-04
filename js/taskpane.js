@@ -120,6 +120,11 @@ function maybeRunUninstall() {
     setTimeout(doUninstall, 300);
 }
 
+// 面板内的"卸载插件"按钮入口
+function uninstallFromPane() {
+    setTimeout(doUninstall, 100);
+}
+
 function doUninstall() {
     if (!window.confirm('确定要卸载「单元格翻译」插件吗？\n卸载后重启 WPS 表格即生效。')) return;
     // 方式一：WPS 原生管理接口
