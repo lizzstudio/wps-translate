@@ -18,17 +18,14 @@ var DEVICE_KEY = 'translate_device_id';
 var LIC_CODE_KEY = 'translate_license';
 var LIC_DEV_KEY = 'translate_bound_device';
 
-// 设备标识：存 PluginStorage（WPS 重启/卸载不清 → 一次激活长期有效）。
-// 注意：WPS 内置浏览器每次启动会清空 localStorage，不能依赖它存设备标识。
+// 设备标识：存 localStorage（WPS 加载项用 CEF 内核，Local Storage 落盘到
+// %APPDATA%\kingsoft\wps\addons\...\jsapi\cache\Local Storage\leveldb，跨会话持久）。
+// 实测 PluginStorage 不持久，故激活相关数据一律用 localStorage。
 function getDeviceId() {
     var id = '';
-    try { id = window.Application.PluginStorage.getItem('translate_device_id') || ''; } catch (e) {}
-    if (!id) {
-        try { id = localStorage.getItem(DEVICE_KEY) || ''; } catch (e) {}
-    }
+    try { id = localStorage.getItem(DEVICE_KEY) || ''; } catch (e) {}
     if (!id) {
         id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
-        try { window.Application.PluginStorage.setItem('translate_device_id', id); } catch (e) {}
         try { localStorage.setItem(DEVICE_KEY, id); } catch (e) {}
     }
     return id;
@@ -46,8 +43,12 @@ function lsOk() {
     } catch (e) { return false; }
 }
 
-function getLicense() { return getSetting(LIC_CODE_KEY, ''); }
-function getBoundDevice() { return getSetting(LIC_DEV_KEY, ''); }
+function getLicense() {
+    try { return localStorage.getItem(LIC_CODE_KEY) || ''; } catch (e) { return ''; }
+}
+function getBoundDevice() {
+    try { return localStorage.getItem(LIC_DEV_KEY) || ''; } catch (e) { return ''; }
+}
 
 function isActivated() {
     var code = getLicense();
@@ -86,8 +87,8 @@ function doActivate() {
         body: JSON.stringify({ code: code, device: getDeviceId() })
     }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.ok) {
-            window.Application.PluginStorage.setItem(LIC_CODE_KEY, code);
-            window.Application.PluginStorage.setItem(LIC_DEV_KEY, getDeviceId());
+            localStorage.setItem(LIC_CODE_KEY, code);
+            localStorage.setItem(LIC_DEV_KEY, getDeviceId());
             showLicMsg('✓ 激活成功');
             updateLicUI();
         } else {
