@@ -3,6 +3,7 @@
 
 // 加载项启动时调用，自动打开翻译任务窗格
 function OnAddinLoad(ribbonUI) {
+    alert('[诊断] ribbon.js 已加载，OnAddinLoad 执行');  // TODO 诊断后删除
     if (typeof (window.Application.ribbonUI) != "object") {
         window.Application.ribbonUI = ribbonUI;
     }
@@ -15,6 +16,7 @@ function OnAddinLoad(ribbonUI) {
 }
 
 function OnAction(control) {
+    alert('[诊断] 点击按钮: ' + control.Id);  // TODO 诊断后删除
     if (control.Id === "btnTranslatePane") {
         openTranslatePane();
     } else if (control.Id === "btnUninstall") {
