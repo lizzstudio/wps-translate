@@ -4,9 +4,12 @@ var DEFAULTS = {
     apiUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
     model: 'glm-4-flash'
 };
+// 翻译设置存 localStorage（CEF Local Storage 落盘持久；PluginStorage 不持久）
 function getSetting(key, def) {
-    var v = window.Application.PluginStorage.getItem(key);
-    return (v && v !== 'null') ? v : def;
+    try {
+        var v = localStorage.getItem(key);
+        return (v && v !== 'null') ? v : def;
+    } catch (e) { return def; }
 }
 function getKey() { return getSetting('translate_key', ''); }
 function getApiUrl() { return getSetting('translate_api', DEFAULTS.apiUrl); }
@@ -108,10 +111,10 @@ function showLicMsg(msg, isErr) {
 function saveSettings() {
     var key = document.getElementById('apikey').value.trim();
     if (!key) { document.getElementById('keyStatus').innerHTML = 'Key 不能为空'; return; }
-    window.Application.PluginStorage.setItem('translate_key', key);
-    window.Application.PluginStorage.setItem('translate_api',
+    localStorage.setItem('translate_key', key);
+    localStorage.setItem('translate_api',
         document.getElementById('apiurl').value.trim() || DEFAULTS.apiUrl);
-    window.Application.PluginStorage.setItem('translate_model',
+    localStorage.setItem('translate_model',
         document.getElementById('model').value.trim() || DEFAULTS.model);
     document.getElementById('keyStatus').innerHTML = '✓ 已保存';
     setTimeout(function(){ document.getElementById('keyStatus').innerHTML = ''; }, 2000);
