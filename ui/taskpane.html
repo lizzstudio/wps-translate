@@ -67,15 +67,15 @@
         </div>
         <div class="row">
             <label>API 地址</label>
-            <input type="text" id="apiurl" placeholder="https://open.bigmodel.cn/api/paas/v4/chat/completions">
+            <input type="text" id="apiurl" onchange="saveSettings()" placeholder="https://open.bigmodel.cn/api/paas/v4/chat/completions">
         </div>
         <div class="row">
             <label>模型</label>
-            <input type="text" id="model" placeholder="glm-4-flash">
+            <input type="text" id="model" onchange="saveSettings()" placeholder="glm-4-flash">
         </div>
         <div class="row">
             <label>API Key</label>
-            <input type="password" id="apikey" placeholder="对应模型的 API Key">
+            <input type="password" id="apikey" onchange="saveSettings()" placeholder="对应模型的 API Key">
         </div>
         <div class="row">
             <button onclick="saveSettings()">保存设置</button>
