@@ -11,15 +11,15 @@ function getSetting(key, def) {
         return (v && v !== 'null') ? v : def;
     } catch (e) { return def; }
 }
-function getKey() { return getSetting('translate_key', ''); }
-function getApiUrl() { return getSetting('translate_api', DEFAULTS.apiUrl); }
-function getModel() { return getSetting('translate_model', DEFAULTS.model); }
+function getKey() { return getSetting('wps_translate_key', ''); }
+function getApiUrl() { return getSetting('wps_translate_api', DEFAULTS.apiUrl); }
+function getModel() { return getSetting('wps_translate_model', DEFAULTS.model); }
 
 // ============ 授权激活（一码一机） ============
 var LICENSE_API = 'https://wps-license-wps-license-vgiirgrkbu.cn-hangzhou.fcapp.run';   // 激活服务器（阿里云FC）
-var DEVICE_KEY = 'translate_device_id';
-var LIC_CODE_KEY = 'translate_license';
-var LIC_DEV_KEY = 'translate_bound_device';
+var DEVICE_KEY = 'wps_translate_device_id';
+var LIC_CODE_KEY = 'wps_translate_license';
+var LIC_DEV_KEY = 'wps_translate_bound_device';
 
 // 设备标识：存 localStorage（WPS 加载项用 CEF 内核，Local Storage 落盘到
 // %APPDATA%\kingsoft\wps\addons\...\jsapi\cache\Local Storage\leveldb，跨会话持久）。
@@ -111,10 +111,10 @@ function showLicMsg(msg, isErr) {
 function saveSettings() {
     var key = document.getElementById('apikey').value.trim();
     if (!key) { document.getElementById('keyStatus').innerHTML = 'Key 不能为空'; return; }
-    localStorage.setItem('translate_key', key);
-    localStorage.setItem('translate_api',
+    localStorage.setItem('wps_translate_key', key);
+    localStorage.setItem('wps_translate_api',
         document.getElementById('apiurl').value.trim() || DEFAULTS.apiUrl);
-    localStorage.setItem('translate_model',
+    localStorage.setItem('wps_translate_model',
         document.getElementById('model').value.trim() || DEFAULTS.model);
     document.getElementById('keyStatus').innerHTML = '✓ 已保存';
     setTimeout(function(){ document.getElementById('keyStatus').innerHTML = ''; }, 2000);
