@@ -12,6 +12,93 @@ function getKey() { return getSetting('translate_key', ''); }
 function getApiUrl() { return getSetting('translate_api', DEFAULTS.apiUrl); }
 function getModel() { return getSetting('translate_model', DEFAULTS.model); }
 
+// ============ 授权激活（一码一机） ============
+var LICENSE_API = '';   // 激活服务器地址，部署 Cloudflare Worker 后填入
+var DEVICE_KEY = 'translate_device_id';
+var LIC_CODE_KEY = 'translate_license';
+var LIC_DEV_KEY = 'translate_bound_device';
+
+// 设备标识：存 localStorage（WPS 卸载插件不清它 → 重装后标识不变）
+function getDeviceId() {
+    try {
+        if (window.localStorage) {
+            var id = localStorage.getItem(DEVICE_KEY);
+            if (!id) {
+                id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+                localStorage.setItem(DEVICE_KEY, id);
+            }
+            return id;
+        }
+    } catch (e) {}
+    return 'dev_unsupported';
+}
+
+// localStorage 可用性自检
+function lsOk() {
+    try {
+        if (!window.localStorage) return false;
+        var t = '__t_' + Date.now();
+        localStorage.setItem(t, '1');
+        var ok = localStorage.getItem(t) === '1';
+        localStorage.removeItem(t);
+        return ok;
+    } catch (e) { return false; }
+}
+
+function getLicense() { return getSetting(LIC_CODE_KEY, ''); }
+function getBoundDevice() { return getSetting(LIC_DEV_KEY, ''); }
+
+function isActivated() {
+    var code = getLicense();
+    var bound = getBoundDevice();
+    return !!(code && bound && bound === getDeviceId());
+}
+
+function updateLicUI() {
+    var st = document.getElementById('licStatus');
+    var info = document.getElementById('licInfo');
+    var dev = getDeviceId();
+    var ls = lsOk() ? 'localStorage ✅' : '⚠️ 不支持';
+    if (isActivated()) {
+        st.innerHTML = '✅ 已激活';
+        st.style.color = '#2e7d32';
+    } else {
+        st.innerHTML = '🔒 未激活';
+        st.style.color = '#c0392b';
+    }
+    info.innerHTML = '设备：' + dev.slice(0, 12) + '… | 存储：' + ls;
+    document.getElementById('licenseKey').value = getLicense();
+}
+
+function doActivate() {
+    var code = document.getElementById('licenseKey').value.trim();
+    if (!code) { showLicMsg('请输入激活码', true); return; }
+    if (!LICENSE_API) { showLicMsg('激活服务未配置', true); return; }
+    showLicMsg('激活中…');
+    fetch(LICENSE_API + '/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, device: getDeviceId() })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.ok) {
+            window.Application.PluginStorage.setItem(LIC_CODE_KEY, code);
+            window.Application.PluginStorage.setItem(LIC_DEV_KEY, getDeviceId());
+            showLicMsg('✓ 激活成功');
+            updateLicUI();
+        } else {
+            showLicMsg((d && d.msg) || '激活失败', true);
+        }
+    }).catch(function (e) {
+        showLicMsg('网络错误：' + e.message, true);
+    });
+}
+
+function showLicMsg(msg, isErr) {
+    var el = document.getElementById('licMsg');
+    el.innerHTML = msg;
+    el.style.color = isErr ? '#c0392b' : '#2e7d32';
+}
+
 function saveSettings() {
     var key = document.getElementById('apikey').value.trim();
     if (!key) { document.getElementById('keyStatus').innerHTML = 'Key 不能为空'; return; }
@@ -105,5 +192,6 @@ window.onload = function () {
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
     setInterval(tick, 600);
+    updateLicUI();
 };
 
