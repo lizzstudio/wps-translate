@@ -570,7 +570,7 @@
 
         function LoadPublishAddons() {
             var addonList = document.getElementById("addonList");
-            var curList = [{"name":"test123","addonType":"wps","online":"true","multiUser":"false","url":"http://www.test.a/"},{"name":"wps-translate","addonType":"et","online":"true","multiUser":"false","url":"https://lizzstudio.github.io/wps-translate/"}];
+            var curList = [{"name":"wps-translate","addonType":"et","online":"true","multiUser":"false","url":"https://lizzstudio.github.io/wps-translate/"}];
             curList.forEach(function (element) {
                 var param = JSON.stringify(element).replace("\"", "\'");
                 UpdateElement(element, 'enable')
