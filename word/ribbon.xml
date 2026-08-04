@@ -1,10 +1,10 @@
-<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OnAddinLoad">
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="ribbon.OnAddinLoad">
     <ribbon startFromScratch="false">
         <tabs>
             <tab id="translateTab" label="翻译工具">
                 <group id="translateGroup" label="翻译">
-                    <button id="btnTranslatePane" label="选中翻译" onAction="OnAction" getImage="GetImage" visible="true" size="large"/>
-                    <button id="btnUninstall" label="卸载插件" onAction="OnAction" getImage="GetUninstallImage" visible="true" size="large"/>
+                    <button id="btnTranslatePane" label="选中翻译" onAction="ribbon.OnAction" getImage="ribbon.GetImage" visible="true" size="large"/>
+                    <button id="btnUninstall" label="卸载插件" onAction="ribbon.OnAction" getImage="ribbon.GetUninstallImage" visible="true" size="large"/>
                 </group>
             </tab>
         </tabs>
