@@ -18,19 +18,20 @@ var DEVICE_KEY = 'translate_device_id';
 var LIC_CODE_KEY = 'translate_license';
 var LIC_DEV_KEY = 'translate_bound_device';
 
-// 设备标识：存 localStorage（WPS 卸载插件不清它 → 重装后标识不变）
+// 设备标识：存 PluginStorage（WPS 重启/卸载不清 → 一次激活长期有效）。
+// 注意：WPS 内置浏览器每次启动会清空 localStorage，不能依赖它存设备标识。
 function getDeviceId() {
-    try {
-        if (window.localStorage) {
-            var id = localStorage.getItem(DEVICE_KEY);
-            if (!id) {
-                id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
-                localStorage.setItem(DEVICE_KEY, id);
-            }
-            return id;
-        }
-    } catch (e) {}
-    return 'dev_unsupported';
+    var id = '';
+    try { id = window.Application.PluginStorage.getItem('translate_device_id') || ''; } catch (e) {}
+    if (!id) {
+        try { id = localStorage.getItem(DEVICE_KEY) || ''; } catch (e) {}
+    }
+    if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        try { window.Application.PluginStorage.setItem('translate_device_id', id); } catch (e) {}
+        try { localStorage.setItem(DEVICE_KEY, id); } catch (e) {}
+    }
+    return id;
 }
 
 // localStorage 可用性自检
@@ -60,12 +61,16 @@ function updateLicUI() {
     var dev = getDeviceId();
     var ls = lsOk() ? 'localStorage ✅' : '⚠️ 不支持';
     if (isActivated()) {
-        st.innerHTML = '✅ 已激活';
-        st.style.color = '#2e7d32';
-    } else {
-        st.innerHTML = '🔒 未激活';
-        st.style.color = '#c0392b';
+        // 已激活：隐藏激活卡片，标题旁显示"已激活"徽标
+        document.getElementById('licCard').style.display = 'none';
+        document.getElementById('activatedBadge').style.display = 'inline';
+        return;
     }
+    // 未激活：显示激活卡片
+    document.getElementById('licCard').style.display = '';
+    document.getElementById('activatedBadge').style.display = 'none';
+    st.innerHTML = '🔒 未激活';
+    st.style.color = '#c0392b';
     info.innerHTML = '设备：' + dev.slice(0, 12) + '… | 存储：' + ls;
     document.getElementById('licenseKey').value = getLicense();
 }
