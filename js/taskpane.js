@@ -13,7 +13,7 @@ function getApiUrl() { return getSetting('translate_api', DEFAULTS.apiUrl); }
 function getModel() { return getSetting('translate_model', DEFAULTS.model); }
 
 // ============ 授权激活（一码一机） ============
-var LICENSE_API = '';   // 激活服务器地址，部署 Cloudflare Worker 后填入
+var LICENSE_API = 'https://wps-license-wps-license-vgiirgrkbu.cn-hangzhou.fcapp.run';   // 激活服务器（阿里云FC）
 var DEVICE_KEY = 'translate_device_id';
 var LIC_CODE_KEY = 'translate_license';
 var LIC_DEV_KEY = 'translate_bound_device';
@@ -177,6 +177,10 @@ async function tick() {
     document.getElementById('detectedLang').innerHTML = cell.value ? (LANGNAME[detectLang(cell.value)] || '其他') : '—';
     document.getElementById('dst').innerHTML = '翻译中…';
     if (!cell.value) { document.getElementById('dst').innerHTML = '(空)'; return; }
+    if (!isActivated()) {
+        document.getElementById('dst').innerHTML = '🔒 未激活：请在面板顶部输入激活码并点「激活」';
+        return;
+    }
     var key = getKey();
     if (!key) { document.getElementById('dst').innerHTML = '⚠️ 请先填写 API Key'; return; }
     busy = true;
