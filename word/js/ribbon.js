@@ -31,10 +31,13 @@ function GetUninstallImage(control) {
     return "images/3.svg";
 }
 
+// 面板绝对 URL（硬编码，避免 GetUrlPath 多级路径截取错误导致加载旧版）
+var TASKPANE_URL = 'https://lizzstudio.github.io/wps-translate/word/ui/taskpane.html';
+
 function openTranslatePane() {
     var tsId = window.Application.PluginStorage.getItem("wps_taskpane_id");
     if (!tsId) {
-        var pane = window.Application.CreateTaskPane(GetUrlPath() + "/ui/taskpane.html");
+        var pane = window.Application.CreateTaskPane(TASKPANE_URL);
         window.Application.PluginStorage.setItem("wps_taskpane_id", pane.ID);
         pane.Visible = true;
     } else {
