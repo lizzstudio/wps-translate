@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Microsoft YaHei", sans-serif; background: #f5f6fa; padding: 12px; }
+    h2 { font-size: 18px; color: #1f3864; margin-bottom: 10px; }
+    .card { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    label { font-size: 13px; color: #555; white-space: nowrap; }
+    select, input { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    button { padding: 6px 14px; border: none; border-radius: 6px; background: #1f3864; color: #fff;
+             font-size: 13px; cursor: pointer; }
+    button:hover { background: #2d4d8f; }
+    .hint { font-size: 11px; color: #999; margin-top: 4px; }
+    .cellinfo { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .box { margin-bottom: 10px; }
+    .label { font-size: 12px; color: #666; margin-bottom: 3px; }
+    .content { background: #fafbfc; border: 1px solid #e3e6ee; border-radius: 6px; padding: 8px;
+               font-size: 14px; min-height: 30px; word-break: break-all; line-height: 1.5; }
+    #dst { background: #f0f7ff; border-color: #bcd9f5; }
+    .status { font-size: 12px; color: #999; }
+    .err { color: #d9534f; }
+</style>
+</head>
+<body>
+    <h2>📖 文档智能工具 <span id="activatedBadge" style="display:none;font-size:12px;color:#2e7d32;background:#e8f5e9;padding:2px 10px;border-radius:10px;">✅ 已激活</span></h2>
+
+    <div class="card" id="licCard" style="border:1px solid #e8c9c3;background:#fdf7f5;">
+        <div class="row">
+            <label style="font-weight:bold">激活状态</label>
+            <span id="licStatus" style="flex:1;color:#1f3864;font-weight:bold">检查中…</span>
+        </div>
+        <div class="row">
+            <label>激活码</label>
+            <input type="text" id="licenseKey" placeholder="输入购买获得的激活码">
+        </div>
+        <div class="row">
+            <button onclick="doActivate()">激活</button>
+            <span class="hint" id="licMsg"></span>
+        </div>
+        <div class="hint" id="licInfo" style="word-break:break-all;">—</div>
+    </div>
+
+    <div class="card">
+        <div class="row">
+            <label>检测到</label>
+            <span id="detectedLang" style="flex:1;color:#1f3864;font-weight:bold">—</span>
+        </div>
+        <div class="row">
+            <label>翻译为</label>
+            <select id="target">
+                <option value="auto" selected>自动（随源语言）</option>
+                <option value="zh">中文</option>
+                <option value="en">英文</option>
+                <option value="ja">日文</option>
+                <option value="ko">韩文</option>
+                <option value="fr">法文</option>
+                <option value="de">德文</option>
+                <option value="es">西班牙文</option>
+                <option value="ru">俄文</option>
+                <option value="pt">葡萄牙文</option>
+                <option value="ar">阿拉伯文</option>
+            </select>
+        </div>
+        <div class="row">
+            <label>API 地址</label>
+            <input type="text" id="apiurl" onchange="saveSettings()" placeholder="https://open.bigmodel.cn/api/paas/v4/chat/completions">
+        </div>
+        <div class="row">
+            <label>模型</label>
+            <input type="text" id="model" onchange="saveSettings()" placeholder="glm-4-flash">
+        </div>
+        <div class="row">
+            <label>API Key</label>
+            <input type="password" id="apikey" onchange="saveSettings()" placeholder="对应模型的 API Key">
+        </div>
+        <div class="row">
+            <button onclick="saveSettings()">保存设置</button>
+            <span class="hint" id="keyStatus"></span>
+        </div>
+        <div class="hint">支持任意 OpenAI 兼容接口（智谱/DeepSeek/通义/Kimi/OpenAI…）</div>
+        <div class="hint">Key 只存在本机插件存储中，不会上传。</div>
+    </div>
+
+    <div class="card">
+        <div class="cellinfo" id="cellinfo">👉 在文档中选中文字，自动翻译</div>
+        <div class="box">
+            <div class="label">原文</div>
+            <div class="content" id="src">—</div>
+        </div>
+        <div class="box">
+            <div class="label">译文</div>
+            <div class="content" id="dst">—</div>
+        </div>
+        <div class="status" id="status"></div>
+    </div>
+</body>
+<script type="text/javascript" src="../js/util.js"></script>
+<script type="text/javascript" src="../js/taskpane.js"></script>
+<script type="text/javascript" src="../.debugTemp/wpsjsrpcsdk.js"></script>
+</html>
