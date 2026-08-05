@@ -136,7 +136,7 @@ function getSelection() {
         if (!sel) return null;
         var text = '';
         try { text = sel.Text || ''; } catch (e) { text = ''; }
-        if (text) text = text.replace(/[\r\n]/g, ' ').trim();
+        if (text) text = text.replace(/[\r\n\b]/g, ' ').trim();
         if (!text) return null;
         return { text: text };
     } catch (e) { return null; }
@@ -170,7 +170,7 @@ function getTarget(text) {
     return detectLang(text) === 'zh' ? '英文' : '中文';
 }
 
-// 选中翻译（轮询选中文本变化）
+// 选中翻译（轮询选中文字变化）
 var lastSel = '', busy = false;
 async function tick() {
     var sel = getSelection();
@@ -202,8 +202,8 @@ window.onload = function () {
     document.getElementById('apikey').value = getKey();
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
-    // 临时移除轮询 + 激活UI（排查 WPS 卡顿：localStorage/DOM 操作可能阻塞）
-    // setInterval(tick, 2000);
-    // updateLicUI();
+    // 轮询 2000ms：降低 Selection 读取频率，避免阻塞 WPS 文字 UI
+    setInterval(tick, 2000);
+    updateLicUI();
 };
 
