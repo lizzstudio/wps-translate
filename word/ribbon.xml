@@ -1,7 +1,7 @@
 <customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OnAddinLoad">
     <ribbon startFromScratch="false">
         <tabs>
-            <tab id="translateTab" label="翻译工具">
+            <tab id="translateTab" label="智能工具">
                 <group id="translateGroup" label="翻译">
                     <button id="btnTranslatePane" label="选中翻译" onAction="OnAction" getImage="GetImage" visible="true" size="large"/>
                     <button id="btnSettings" label="设置" onAction="OnAction" getImage="GetImage" visible="true" size="large"/>
