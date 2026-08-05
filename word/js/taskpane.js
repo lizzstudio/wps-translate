@@ -202,8 +202,8 @@ window.onload = function () {
     document.getElementById('apikey').value = getKey();
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
-    // 轮询频率 2000ms：降低 Selection 读取频率，避免阻塞 WPS 文字 UI
-    setInterval(tick, 2000);
+    // 临时移除轮询（排查 WPS 卡顿：Selection 读取可能阻塞）
+    // setInterval(tick, 2000);
     updateLicUI();
 };
 
