@@ -165,8 +165,10 @@ async function doTranslate(text, key, target) {
 }
 
 // 目标语言：按用户选择（多语言），auto 则随源语言反向
-var LANG = { zh: '中文', en: '英文', ja: '日文', ko: '韩文', fr: '法文', de: '德文',
-             es: '西班牙文', ru: '俄文', pt: '葡萄牙文', ar: '阿拉伯文' };
+var LANG = { zh: '中文', en: 'English', ja: '日本語', ko: '한국어', fr: 'Français', de: 'Deutsch',
+             es: 'Español', ru: 'Русский', pt: 'Português', ar: 'العربية',
+             it: 'Italiano', nl: 'Nederlands', pl: 'Polski', tr: 'Türkçe',
+             th: 'ไทย', vi: 'Tiếng Việt', id: 'Bahasa Indonesia' };
 function getTarget(text) {
     var t = document.getElementById('target').value;
     if (LANG[t]) return LANG[t];
