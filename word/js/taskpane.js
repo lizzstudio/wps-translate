@@ -202,7 +202,8 @@ window.onload = function () {
     document.getElementById('apikey').value = getKey();
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
-    setInterval(tick, 600);
+    // 轮询频率 2000ms：降低 Selection 读取频率，避免阻塞 WPS 文字 UI
+    setInterval(tick, 2000);
     updateLicUI();
 };
 
