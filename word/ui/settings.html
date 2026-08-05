@@ -55,7 +55,7 @@ function doActivate() {
     msg('激活中…');
     fetch(LICENSE_API + '/activate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code, device: getDeviceId() })
+        body: JSON.stringify({ code: code, device: getDeviceId(), product: 'word' })
     }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.ok) {
             localStorage.setItem('wps_translate_license', code);
