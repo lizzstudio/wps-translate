@@ -85,24 +85,10 @@ function getSelectionText() {
 
 // ============ 按钮处理 ============
 function doTranslateDialog() {
-    // 弹窗常驻：只弹一个，定位到右侧（模拟侧边栏），弹窗内轮询选中文字自动翻译
+    // 弹窗常驻：弹窗内轮询选中文字自动翻译（ShowDialogEx 靠右在本环境弹不出，先用居中 ShowDialog 保证可用）
     try {
-        if (localStorage.getItem('wps_dialog_open') === '1') {
-            if (!confirm('翻译弹窗已打开。如果没看到弹窗（可能是上次关闭残留），点确定重新打开。')) return;
-            localStorage.setItem('wps_dialog_open', '0');
-        }
-        var url = GetUrlPath() + '/ui/dialog.html';
-        var pw = 440, ph = 460;   // 弹窗宽高（窄长，贴近侧边栏）
-        var dpr = window.devicePixelRatio || 1;
-        try {
-            var app = wps.Application;   // WPS 程序窗口
-            // 弹窗靠右：左边 = 程序窗口右边界 - 弹窗宽 - 边距（磅转像素）
-            var windowLeft = (app.Left + app.Width - pw - 30) / 72 * 96 * dpr;
-            var windowTop = 60 / 72 * 96 * dpr;
-            wps.ShowDialogEx(url, '文档智能翻译', pw * dpr, ph * dpr, false, true, true, undefined, undefined, undefined, undefined, windowLeft, windowTop);
-        } catch (e2) {
-            window.Application.ShowDialog(url, '文档智能翻译', pw, ph, false);
-        }
+        localStorage.setItem('wps_dialog_open', '1');
+        window.Application.ShowDialog(GetUrlPath() + '/ui/dialog.html', '文档智能翻译', 520, 460, false);
     } catch (e) { alert('打开翻译弹窗失败：' + e.message); }
 }
 
