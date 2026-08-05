@@ -87,7 +87,7 @@ function doActivate() {
     fetch(LICENSE_API + '/activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code, device: getDeviceId() })
+        body: JSON.stringify({ code: code, device: getDeviceId(), product: 'excel' })
     }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.ok) {
             localStorage.setItem(LIC_CODE_KEY, code);
