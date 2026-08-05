@@ -155,10 +155,3 @@ function doDisable(el) {
     });
 }
 
-// 暴露回调到 window.ribbon（WPS 文字 wps 类型加载项经 ribbon.xxx 调用）
-window.ribbon = {
-    OnAddinLoad: OnAddinLoad,
-    OnAction: OnAction,
-    GetImage: GetImage,
-    GetUninstallImage: GetUninstallImage
-};
