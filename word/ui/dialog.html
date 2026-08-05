@@ -16,6 +16,29 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16p
   <button onclick="topMost()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#1f3864;color:#fff;cursor:pointer;margin-left:6px;">置顶</button>
   <button onclick="closeDlg()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#c0392b;color:#fff;cursor:pointer;">关闭</button>
 </div>
+<div style="margin-bottom:10px;">
+  <label style="font-size:13px;color:#666;">翻译为</label>
+  <select id="target" style="padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+    <option value="auto" selected>自动（随源语言）</option>
+    <option value="zh">中文</option>
+    <option value="en">英文</option>
+    <option value="ja">日文</option>
+    <option value="ko">韩文</option>
+    <option value="fr">法文</option>
+    <option value="de">德文</option>
+    <option value="es">西班牙文</option>
+    <option value="ru">俄文</option>
+    <option value="pt">葡萄牙文</option>
+    <option value="ar">阿拉伯文</option>
+    <option value="it">意大利文</option>
+    <option value="nl">荷兰文</option>
+    <option value="pl">波兰文</option>
+    <option value="tr">土耳其文</option>
+    <option value="th">泰文</option>
+    <option value="vi">越南文</option>
+    <option value="id">印尼文</option>
+  </select>
+</div>
 <div class="label">原文</div>
 <div class="box" id="src">在文档中选中文字，自动翻译…</div>
 <div class="label">译文</div>
@@ -37,7 +60,15 @@ function getSelectionText() {
         return t.replace(/[\r\n\b]/g, ' ').trim();
     } catch (e) { return ''; }
 }
-function getTarget(text) { return /[一-鿿]/.test(text) ? '英文' : '中文'; }
+var LANG = { auto: '自动', zh: '中文', en: '英文', ja: '日文', ko: '韩文', fr: '法文', de: '德文',
+             es: '西班牙文', ru: '俄文', pt: '葡萄牙文', ar: '阿拉伯文',
+             it: '意大利文', nl: '荷兰文', pl: '波兰文', tr: '土耳其文',
+             th: '泰文', vi: '越南文', id: '印尼文' };
+function getTarget(text) {
+    var t = document.getElementById('target').value;
+    if (t && t !== 'auto' && LANG[t]) return LANG[t];
+    return /[一-鿿]/.test(text) ? '英文' : '中文';
+}
 
 async function doTranslate(text, key) {
     var url = localStorage.getItem('wps_translate_api') || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
@@ -75,6 +106,8 @@ async function tick() {
 window.onload = function () {
     localStorage.setItem('wps_dialog_open', '1');
     setInterval(tick, 1500);
+    // 切换目标语言后立即重新翻译当前选中
+    document.getElementById('target').addEventListener('change', function () { lastSel = ''; tick(); });
 };
 // 弹窗内"关闭"按钮：清标记 + 尝试关闭
 function closeDlg() {
