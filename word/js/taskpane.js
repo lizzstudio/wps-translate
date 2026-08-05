@@ -202,8 +202,8 @@ window.onload = function () {
     document.getElementById('apikey').value = getKey();
     document.getElementById('apiurl').value = getApiUrl();
     document.getElementById('model').value = getModel();
-    // 临时移除轮询（排查 WPS 卡顿：Selection 读取可能阻塞）
+    // 临时移除轮询 + 激活UI（排查 WPS 卡顿：localStorage/DOM 操作可能阻塞）
     // setInterval(tick, 2000);
-    updateLicUI();
+    // updateLicUI();
 };
 
