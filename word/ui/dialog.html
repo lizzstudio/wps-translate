@@ -13,6 +13,7 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16p
 </head>
 <body>
 <div class="title">📖 文档智能翻译
+  <span id="licStatus" style="font-size:12px;margin-left:4px;vertical-align:middle;"></span>
   <button onclick="topMost()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#1f3864;color:#fff;cursor:pointer;margin-left:6px;">置顶</button>
   <button onclick="closeDlg()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#c0392b;color:#fff;cursor:pointer;">关闭</button>
 </div>
@@ -50,6 +51,28 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16p
 </div>
 <script>
 var busy = false, lastSel = '';
+
+// 激活状态（与 ribbon.js 同一套逻辑，wps_ 前缀独立于 Excel）
+function getDeviceId() {
+    var id = '';
+    try { id = localStorage.getItem('wps_translate_device_id') || ''; } catch (e) {}
+    if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        try { localStorage.setItem('wps_translate_device_id', id); } catch (e) {}
+    }
+    return id;
+}
+function isActivated() {
+    try {
+        return !!(localStorage.getItem('wps_translate_license') && localStorage.getItem('wps_translate_bound_device') === getDeviceId());
+    } catch (e) { return false; }
+}
+function updateLicUI() {
+    var el = document.getElementById('licStatus');
+    if (!el) return;
+    if (isActivated()) { el.innerHTML = '✅ 已激活'; el.style.color = '#2e7d32'; }
+    else { el.innerHTML = '🔒 未激活'; el.style.color = '#c0392b'; }
+}
 
 function getSelectionText() {
     try {
@@ -92,6 +115,10 @@ async function tick() {
     if (!text || text === lastSel || busy) return;
     lastSel = text;
     document.getElementById('src').textContent = text.length > 2000 ? text.slice(0, 2000) + '…' : text;
+    if (!isActivated()) {
+        document.getElementById('dst').textContent = '🔒 未激活：请打开「设置」输入激活码激活';
+        return;
+    }
     document.getElementById('dst').textContent = '翻译中…';
     busy = true;
     try {
@@ -105,7 +132,8 @@ async function tick() {
 
 window.onload = function () {
     localStorage.setItem('wps_dialog_open', '1');
-    setInterval(tick, 1500);
+    updateLicUI();
+    setInterval(function () { updateLicUI(); tick(); }, 1500);
     // 切换目标语言后立即重新翻译当前选中
     document.getElementById('target').addEventListener('change', function () { lastSel = ''; tick(); });
 };
