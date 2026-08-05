@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16px; }
+h3 { color:#1f3864; margin-bottom:12px; }
+.row { margin-bottom:10px; }
+label { display:block; font-size:13px; color:#555; margin-bottom:3px; }
+input { width:100%; padding:7px 9px; border:1px solid #ccc; border-radius:6px; font-size:13px; box-sizing:border-box; }
+button { padding:7px 16px; border:none; border-radius:6px; background:#1f3864; color:#fff; font-size:13px; cursor:pointer; margin-right:8px; }
+button:hover { background:#2d4d8f; }
+.hint { font-size:11px; color:#999; margin-top:8px; }
+#msg { font-size:13px; margin-top:10px; }
+</style>
+</head>
+<body>
+<h3>设置</h3>
+<div class="row"><label>API 地址</label><input id="apiurl"></div>
+<div class="row"><label>模型</label><input id="model" placeholder="glm-4-flash"></div>
+<div class="row"><label>API Key</label><input id="apikey" type="password"></div>
+<div class="row"><label>激活码</label><input id="licenseKey" placeholder="输入购买获得的激活码"></div>
+<div>
+  <button onclick="saveSettings()">保存设置</button>
+  <button onclick="doActivate()" style="background:#2e7d32;">激活</button>
+</div>
+<div id="msg"></div>
+<div class="hint">支持任意 OpenAI 兼容接口；Key 只存本机。激活码一码一机，转发无效。</div>
+<script>
+var LICENSE_API = 'https://wps-license-wps-license-vgiirgrkbu.cn-hangzhou.fcapp.run';
+function getDeviceId() {
+    var id = '';
+    try { id = localStorage.getItem('wps_translate_device_id') || ''; } catch (e) {}
+    if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        try { localStorage.setItem('wps_translate_device_id', id); } catch (e) {}
+    }
+    return id;
+}
+window.onload = function () {
+    document.getElementById('apiurl').value = localStorage.getItem('wps_translate_api') || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+    document.getElementById('model').value = localStorage.getItem('wps_translate_model') || 'glm-4-flash';
+    document.getElementById('apikey').value = localStorage.getItem('wps_translate_key') || '';
+    document.getElementById('licenseKey').value = localStorage.getItem('wps_translate_license') || '';
+};
+function saveSettings() {
+    localStorage.setItem('wps_translate_api', document.getElementById('apiurl').value.trim() || 'https://open.bigmodel.cn/api/paas/v4/chat/completions');
+    localStorage.setItem('wps_translate_model', document.getElementById('model').value.trim() || 'glm-4-flash');
+    localStorage.setItem('wps_translate_key', document.getElementById('apikey').value.trim());
+    msg('✓ 设置已保存', '#2e7d32');
+}
+function doActivate() {
+    var code = document.getElementById('licenseKey').value.trim();
+    if (!code) { msg('请输入激活码', '#c0392b'); return; }
+    msg('激活中…');
+    fetch(LICENSE_API + '/activate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, device: getDeviceId() })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.ok) {
+            localStorage.setItem('wps_translate_license', code);
+            localStorage.setItem('wps_translate_bound_device', getDeviceId());
+            msg('✓ 激活成功', '#2e7d32');
+        } else msg('激活失败：' + ((d && d.msg) || '未知错误'), '#c0392b');
+    }).catch(function (e) { msg('网络错误：' + e.message, '#c0392b'); });
+}
+function msg(t, c) { var m = document.getElementById('msg'); m.innerHTML = t; m.style.color = c || '#333'; }
+</script>
+</body>
+</html>

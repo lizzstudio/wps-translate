@@ -1,7 +1,5 @@
-// ============ Word 文档翻译：功能区逻辑 ============
-// 卸载按钮在功能区自包含执行（不依赖任务窗格 onload，避免面板已打开时 onload 不重跑导致无反应）
+// ============ Word 文档翻译：功能区逻辑（弹窗方案，避开 CreateTaskPane 卡顿） ============
 
-// 加载项启动时调用，自动打开翻译任务窗格
 function OnAddinLoad(ribbonUI) {
     if (typeof (window.Application.ribbonUI) != "object") {
         window.Application.ribbonUI = ribbonUI;
@@ -9,38 +7,98 @@ function OnAddinLoad(ribbonUI) {
     if (typeof (window.Application.Enum) != "object") {
         window.Application.Enum = WPS_Enum;
     }
-    // 延迟等待 Application 就绪后自动打开翻译面板
-    setTimeout(openTranslatePane, 500);
     return true;
 }
 
 function OnAction(control) {
-    if (control.Id === "btnTranslatePane") {
-        openTranslatePane();
-    } else if (control.Id === "btnUninstall") {
-        uninstallAddon();
-    }
+    if (control.Id === "btnTranslatePane") { doTranslateDialog(); }
+    else if (control.Id === "btnSettings") { showSettingsDialog(); }
+    else if (control.Id === "btnUninstall") { uninstallAddon(); }
     return true;
 }
 
 function GetImage(control) {
     return "images/1.svg";
 }
-
 function GetUninstallImage(control) {
     return "images/3.svg";
 }
 
-function openTranslatePane() {
-    var tsId = window.Application.PluginStorage.getItem("wps_taskpane_id");
-    if (!tsId) {
-        var pane = window.Application.CreateTaskPane(GetUrlPath() + "/ui/taskpane.html");
-        window.Application.PluginStorage.setItem("wps_taskpane_id", pane.ID);
-        pane.Visible = true;
-    } else {
-        var pane = window.Application.GetTaskPane(tsId);
-        pane.Visible = true;
+// ============ 配置读取（localStorage，wps_ 前缀与 Excel 独立） ============
+function getSetting(key, def) {
+    try { var v = localStorage.getItem(key); return (v && v !== 'null') ? v : def; } catch (e) { return def; }
+}
+function getKey() { return getSetting('wps_translate_key', ''); }
+function getApiUrl() { return getSetting('wps_translate_api', 'https://open.bigmodel.cn/api/paas/v4/chat/completions'); }
+function getModel() { return getSetting('wps_translate_model', 'glm-4-flash'); }
+
+// ============ 激活（一码一机） ============
+var LICENSE_API = 'https://wps-license-wps-license-vgiirgrkbu.cn-hangzhou.fcapp.run';
+function getDeviceId() {
+    var id = '';
+    try { id = localStorage.getItem('wps_translate_device_id') || ''; } catch (e) {}
+    if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        try { localStorage.setItem('wps_translate_device_id', id); } catch (e) {}
     }
+    return id;
+}
+function isActivated() {
+    try {
+        return !!(localStorage.getItem('wps_translate_license') && localStorage.getItem('wps_translate_bound_device') === getDeviceId());
+    } catch (e) { return false; }
+}
+
+// ============ 翻译 ============
+function detectLang(text) {
+    if (/[一-鿿]/.test(text)) return 'zh';
+    if (/[ぁ-んァ-ン]/.test(text)) return 'ja';
+    if (/[가-힣]/.test(text)) return 'ko';
+    return 'en';
+}
+function getTarget(text) { return detectLang(text) === 'zh' ? '英文' : '中文'; }
+async function doTranslate(text, key) {
+    var url = getApiUrl();
+    if (url.indexOf('/chat/completions') < 0) url = url.replace(/\/+$/, '') + '/chat/completions';
+    var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: getModel(),
+            messages: [{ role: 'user', content: '请把下面的内容翻译成' + getTarget(text) + '，只输出翻译结果，不要任何解释：\n' + text }],
+            temperature: 0.1
+        })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    return data.choices[0].message.content.trim();
+}
+function getSelectionText() {
+    try {
+        var sel = window.Application.Selection;
+        if (!sel) return '';
+        var t = '';
+        try { t = sel.Text || ''; } catch (e) { t = ''; }
+        return t.replace(/[\r\n\b]/g, ' ').trim();
+    } catch (e) { return ''; }
+}
+
+// ============ 按钮处理 ============
+async function doTranslateDialog() {
+    try {
+        if (!isActivated()) { showSettingsDialog(); return; }
+        var text = getSelectionText();
+        if (!text) { alert('请先在文档中选中要翻译的文字'); return; }
+        var key = getKey();
+        if (!key) { alert('请先打开「设置」填写 API Key'); showSettingsDialog(); return; }
+        var result = await doTranslate(text, key);
+        window.Application.PluginStorage.setItem('wps_translate_result', JSON.stringify({ src: text, dst: result }));
+        window.Application.ShowDialog(GetUrlPath() + '/ui/dialog.html', '翻译结果', 520, 420, false);
+    } catch (e) { alert('翻译失败：' + e.message); }
+}
+
+function showSettingsDialog() {
+    window.Application.ShowDialog(GetUrlPath() + '/ui/settings.html', '设置', 420, 460, false);
 }
 
 // ============ 卸载插件 ============
@@ -52,8 +110,6 @@ var ONLINE_PUBLISH = ADDON_URL + 'publish.html';
 function uninstallAddon() {
     try {
         if (!window.confirm('确定要卸载「Word文档翻译」插件吗？\n卸载后重启 WPS 文字即生效。')) return;
-
-        // ① 原生管理接口（若存在，纯内卸载）
         if (typeof WpsAddonMgr !== 'undefined' && WpsAddonMgr.disable) {
             WpsAddonMgr.disable({ name: ADDON_NAME, addonType: ADDON_TYPE, online: 'true', url: ADDON_URL }, function (result) {
                 WpsAddonMgr.getAllConfig(function (cfg) {
@@ -64,33 +120,22 @@ function uninstallAddon() {
             });
             return;
         }
-
-        // ② OAAssist 打开系统浏览器访问在线卸载页（外部浏览器对 localhost 混合内容有豁免）
         if (typeof wps !== 'undefined' && wps.OAAssist && wps.OAAssist.ShellExecute) {
             wps.OAAssist.ShellExecute(ONLINE_PUBLISH);
             alert('已为您打开浏览器卸载页：\n' + ONLINE_PUBLISH + '\n请在浏览器里点「卸载」，完成后重启 WPS 文字。');
             return;
         }
-
-        // ③ 直接请求本机服务（用 localhost，部分内核对 localhost 豁免混合内容）
         _serverVersion = 'wait';
         post58890('http://localhost:58890/version', JSON.stringify({ serverId: getServerId() }), function (xhr) {
-            if (xhr && xhr.status === 200) {
-                _serverVersion = xhr.responseText;
-                loadAndUninstall();
-            } else {
-                alert('本机 WPS 服务不可达（混合内容拦截）。请重新打开发布包里的 publish.html，点「卸载」。');
-            }
+            if (xhr && xhr.status === 200) { _serverVersion = xhr.responseText; loadAndUninstall(); }
+            else alert('本机 WPS 服务不可达。请重新打开发布包里的 publish.html，点「卸载」。');
         });
-    } catch (e) {
-        alert('卸载异常：' + e.message + '\n请重新打开发布包里的 publish.html 手动卸载。');
-    }
+    } catch (e) { alert('卸载异常：' + e.message); }
 }
 
-// ---- 本地服务 58890 协议（与官方 publish.html 一致，localhost 版）----
+// ---- 58890 协议 ----
 var _serverVersion = 'wait';
 var _serverId = getServerId();
-
 function guid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -106,14 +151,10 @@ function getServerId() {
     } catch (e) {}
     return guid();
 }
-function encode(u) {
-    return btoa(unescape(encodeURIComponent(u)));
-}
+function encode(u) { return btoa(unescape(encodeURIComponent(u))); }
 function FormatSendData(data) {
     var s = JSON.stringify(data);
-    if (_serverVersion >= "1.0.2" && _serverId !== undefined) {
-        return JSON.stringify({ serverId: _serverId, data: encode(s) });
-    }
+    if (_serverVersion >= "1.0.2" && _serverId !== undefined) return JSON.stringify({ serverId: _serverId, data: encode(s) });
     return encode(s);
 }
 function FormartData(el, cmd) {
@@ -134,7 +175,7 @@ function post58890(url, payload, callback) {
 function loadAndUninstall() {
     var baseData = (_serverVersion >= "1.0.2" && _serverId !== undefined) ? JSON.stringify({ serverId: _serverId }) : '';
     post58890('http://localhost:58890/publishlist', baseData, function (xhr) {
-        if (!xhr || xhr.status !== 200) { alert('获取已安装列表失败。请重新打开 publish.html 手动卸载。'); return; }
+        if (!xhr || xhr.status !== 200) { alert('获取已安装列表失败。'); return; }
         var list = null;
         try { list = JSON.parse(xhr.responseText); } catch (e) { alert('解析列表失败：' + e.message); return; }
         var target = null;
@@ -149,8 +190,6 @@ function doDisable(el) {
     post58890('http://localhost:58890/deployaddons/runParams', FormartData(el, 'disable'), function (xhr) {
         if (xhr && (xhr.responseText === 'OK' || (xhr.responseText === '' && xhr.status === 200))) {
             alert('卸载成功！请重启 WPS 文字，插件即从功能区消失。');
-        } else {
-            alert('卸载失败。请重新打开 publish.html，点「卸载」。');
-        }
+        } else alert('卸载失败。请重新打开 publish.html，点「卸载」。');
     });
 }
