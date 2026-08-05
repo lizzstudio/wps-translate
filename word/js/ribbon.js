@@ -34,7 +34,7 @@ function GetUninstallImage(control) {
 function openTranslatePane() {
     var tsId = window.Application.PluginStorage.getItem("wps_taskpane_id");
     if (!tsId) {
-        var pane = window.Application.CreateTaskPane(GetUrlPath() + "/ui/taskpane2.html");
+        var pane = window.Application.CreateTaskPane(GetUrlPath() + "/ui/taskpane3.html");
         window.Application.PluginStorage.setItem("wps_taskpane_id", pane.ID);
         pane.Visible = true;
     } else {
