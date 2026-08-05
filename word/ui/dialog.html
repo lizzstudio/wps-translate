@@ -12,12 +12,19 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16p
 </style>
 </head>
 <body>
-<div class="title">📖 文档智能翻译 <button onclick="closeDlg()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#c0392b;color:#fff;cursor:pointer;">关闭</button></div>
+<div class="title">📖 文档智能翻译
+  <button onclick="topMost()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#1f3864;color:#fff;cursor:pointer;margin-left:6px;">置顶</button>
+  <button onclick="closeDlg()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#c0392b;color:#fff;cursor:pointer;">关闭</button>
+</div>
 <div class="label">原文</div>
 <div class="box" id="src">在文档中选中文字，自动翻译…</div>
 <div class="label">译文</div>
 <div class="box" id="dst">—</div>
-<div class="hint">选中文字即自动翻译；未激活或未填 Key 请打开「设置」</div>
+<div class="hint">选中文字即自动翻译；未激活或未填 Key 请打开「设置」；右键可"置顶固定"</div>
+
+<div id="ctxMenu" style="display:none;position:fixed;background:#fff;border:1px solid #d0d5dd;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:4px 0;z-index:9999;min-width:130px;font-size:13px;">
+  <div onclick="ctxTop()" style="padding:7px 14px;cursor:pointer;">📌 置顶固定</div>
+</div>
 <script>
 var busy = false, lastSel = '';
 
@@ -73,6 +80,35 @@ window.onload = function () {
 function closeDlg() {
     localStorage.setItem('wps_dialog_open', '0');
     try { window.close(); } catch (e) {}
+}
+
+// 右键自定义菜单：置顶固定
+document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+    var m = document.getElementById('ctxMenu');
+    m.style.display = 'block';
+    m.style.left = e.clientX + 'px';
+    m.style.top = e.clientY + 'px';
+});
+document.addEventListener('click', function () { document.getElementById('ctxMenu').style.display = 'none'; });
+function ctxTop() { document.getElementById('ctxMenu').style.display = 'none'; topMost(); }
+
+// 弹窗内"置顶"按钮：用 Windows API 把弹窗固定到最前（不被正文覆盖）
+function toUTF16B64(str) {
+    var bytes = [];
+    for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); bytes.push(c & 0xff, c >> 8); }
+    var bin = '';
+    for (var j = 0; j < bytes.length; j++) bin += String.fromCharCode(bytes[j]);
+    return btoa(bin);
+}
+function topMost() {
+    try {
+        var ps = "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool SetWindowPos(System.IntPtr h,System.IntPtr a,int x,int y,int cx,int cy,uint f);}'\n$p=Get-Process|Where-Object{$_.MainWindowTitle -like '*文档智能翻译*'}\nif($p){[W]::SetWindowPos($p.MainWindowHandle,[System.IntPtr](-1),0,0,0,0,3)}";
+        if (typeof wps !== 'undefined' && wps.OAAssist && wps.OAAssist.ShellExecute) {
+            wps.OAAssist.ShellExecute('powershell -NoProfile -EncodedCommand ' + toUTF16B64(ps));
+            alert('已点击置顶，请查看弹窗是否固定在最前');
+        } else { alert('当前环境不支持自动置顶'); }
+    } catch (e) { alert('置顶失败：' + e.message); }
 }
 </script>
 </body>
