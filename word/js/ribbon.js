@@ -84,17 +84,12 @@ function getSelectionText() {
 }
 
 // ============ 按钮处理 ============
-async function doTranslateDialog() {
+function doTranslateDialog() {
+    // 弹窗常驻：只弹一个，弹窗内轮询选中文字自动翻译
     try {
-        if (!isActivated()) { showSettingsDialog(); return; }
-        var text = getSelectionText();
-        if (!text) { alert('请先在文档中选中要翻译的文字'); return; }
-        var key = getKey();
-        if (!key) { alert('请先打开「设置」填写 API Key'); showSettingsDialog(); return; }
-        var result = await doTranslate(text, key);
-        window.Application.PluginStorage.setItem('wps_translate_result', JSON.stringify({ src: text, dst: result }));
-        window.Application.ShowDialog(GetUrlPath() + '/ui/dialog.html', '翻译结果', 520, 420, false);
-    } catch (e) { alert('翻译失败：' + e.message); }
+        if (localStorage.getItem('wps_dialog_open') === '1') { alert('翻译弹窗已打开，直接选中文字即可自动翻译'); return; }
+        window.Application.ShowDialog(GetUrlPath() + '/ui/dialog.html', '文档智能翻译', 520, 440, false);
+    } catch (e) { alert('打开翻译弹窗失败：' + e.message); }
 }
 
 function showSettingsDialog() {

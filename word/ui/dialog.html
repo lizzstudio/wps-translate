@@ -4,27 +4,72 @@
 <meta charset="utf-8">
 <style>
 body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16px; }
+.title { color:#1f3864; font-size:15px; margin-bottom:10px; }
 .label { font-size:13px; color:#666; margin-bottom:4px; }
 .box { background:#fff; border:1px solid #e3e6ee; border-radius:6px; padding:10px; font-size:14px; margin-bottom:12px; word-break:break-all; line-height:1.5; min-height:40px; }
 #dst { background:#f0f7ff; border-color:#bcd9f5; }
+.hint { font-size:11px; color:#999; }
 </style>
 </head>
 <body>
+<div class="title">📖 文档智能翻译</div>
 <div class="label">原文</div>
-<div class="box" id="src">—</div>
+<div class="box" id="src">在文档中选中文字，自动翻译…</div>
 <div class="label">译文</div>
 <div class="box" id="dst">—</div>
+<div class="hint">选中文字即自动翻译；未激活或未填 Key 请打开「设置」</div>
 <script>
-(function () {
+var busy = false, lastSel = '';
+
+function getSelectionText() {
     try {
-        var r = window.Application.PluginStorage.getItem('wps_translate_result');
-        if (r) {
-            var d = JSON.parse(r);
-            document.getElementById('src').textContent = d.src || '—';
-            document.getElementById('dst').textContent = d.dst || '—';
-        }
-    } catch (e) {}
-})();
+        var sel = window.Application.Selection;
+        if (!sel) return '';
+        var t = '';
+        try { t = sel.Text || ''; } catch (e) { t = ''; }
+        return t.replace(/[\r\n\b]/g, ' ').trim();
+    } catch (e) { return ''; }
+}
+function getTarget(text) { return /[一-鿿]/.test(text) ? '英文' : '中文'; }
+
+async function doTranslate(text, key) {
+    var url = localStorage.getItem('wps_translate_api') || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+    if (url.indexOf('/chat/completions') < 0) url = url.replace(/\/+$/, '') + '/chat/completions';
+    var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: localStorage.getItem('wps_translate_model') || 'glm-4-flash',
+            messages: [{ role: 'user', content: '请把下面的内容翻译成' + getTarget(text) + '，只输出翻译结果，不要任何解释：\n' + text }],
+            temperature: 0.1
+        })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    return data.choices[0].message.content.trim();
+}
+
+async function tick() {
+    var text = getSelectionText();
+    if (!text || text === lastSel || busy) return;
+    lastSel = text;
+    document.getElementById('src').textContent = text.length > 2000 ? text.slice(0, 2000) + '…' : text;
+    document.getElementById('dst').textContent = '翻译中…';
+    busy = true;
+    try {
+        var key = localStorage.getItem('wps_translate_key');
+        if (!key) { document.getElementById('dst').textContent = '⚠️ 请先打开「设置」填写 API Key'; return; }
+        document.getElementById('dst').textContent = await doTranslate(text, key);
+    } catch (e) {
+        document.getElementById('dst').textContent = '翻译失败：' + e.message;
+    } finally { busy = false; }
+}
+
+window.onload = function () {
+    localStorage.setItem('wps_dialog_open', '1');
+    setInterval(tick, 1500);
+};
+window.onunload = function () { localStorage.setItem('wps_dialog_open', '0'); };
 </script>
 </body>
 </html>
