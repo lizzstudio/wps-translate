@@ -12,7 +12,7 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f6fa; padding:16p
 </style>
 </head>
 <body>
-<div class="title">📖 文档智能翻译</div>
+<div class="title">📖 文档智能翻译 <button onclick="closeDlg()" style="float:right;padding:3px 12px;border:none;border-radius:5px;background:#c0392b;color:#fff;cursor:pointer;">关闭</button></div>
 <div class="label">原文</div>
 <div class="box" id="src">在文档中选中文字，自动翻译…</div>
 <div class="label">译文</div>
@@ -69,7 +69,11 @@ window.onload = function () {
     localStorage.setItem('wps_dialog_open', '1');
     setInterval(tick, 1500);
 };
-window.onunload = function () { localStorage.setItem('wps_dialog_open', '0'); };
+// 弹窗内"关闭"按钮：清标记 + 尝试关闭
+function closeDlg() {
+    localStorage.setItem('wps_dialog_open', '0');
+    try { window.close(); } catch (e) {}
+}
 </script>
 </body>
 </html>

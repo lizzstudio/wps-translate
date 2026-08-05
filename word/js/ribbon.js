@@ -87,7 +87,10 @@ function getSelectionText() {
 function doTranslateDialog() {
     // 弹窗常驻：只弹一个，定位到右侧（模拟侧边栏），弹窗内轮询选中文字自动翻译
     try {
-        if (localStorage.getItem('wps_dialog_open') === '1') { alert('翻译弹窗已打开，直接选中文字即可自动翻译'); return; }
+        if (localStorage.getItem('wps_dialog_open') === '1') {
+            if (!confirm('翻译弹窗已打开。如果没看到弹窗（可能是上次关闭残留），点确定重新打开。')) return;
+            localStorage.setItem('wps_dialog_open', '0');
+        }
         var url = GetUrlPath() + '/ui/dialog.html';
         var pw = 440, ph = 460;   // 弹窗宽高（窄长，贴近侧边栏）
         var dpr = window.devicePixelRatio || 1;
