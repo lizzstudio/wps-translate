@@ -9,8 +9,8 @@ function OnAddinLoad(ribbonUI) {
     if (typeof (window.Application.Enum) != "object") {
         window.Application.Enum = WPS_Enum;
     }
-    // 延迟等待 Application 就绪后自动打开翻译面板
-    setTimeout(openTranslatePane, 500);
+    // 临时移除自动打开面板（排查：CreateTaskPane 可能阻塞 WPS 文字）
+    // setTimeout(openTranslatePane, 500);
     return true;
 }
 
